@@ -9,21 +9,31 @@ class AnalyticCards extends StatefulWidget {
 }
 
 class _AnalyticCardsState extends State<AnalyticCards> {
-  int totalInvValue = 0;
-
-  // all inventory items in the database
-  List<Map<String, dynamic>> _inventoryList = [];
+  num totalInvValue = 0;
 
   bool _isLoading = true;
+
+  // all inventory items in the database
+  List inventoryList = [];
+
+  // get total inventory value from the database
+  void calculateInventoryValue() async {
+    inventoryList = await SQLHelper.fetchAllInventory();
+    for (var element in inventoryList) {
+      totalInvValue = (totalInvValue) + element['buyingPrice'];
+    }
+    print(totalInvValue);
+    setState(() {
+      totalInvValue = totalInvValue;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
-    print("initState Called");
-
-    print("......");
+    calculateInventoryValue();
+    // print("initState Called");
     print(totalInvValue);
-    print("......");
   }
 
   @override
@@ -45,7 +55,7 @@ class _AnalyticCardsState extends State<AnalyticCards> {
                 ),
               ),
               subtitle: Text(
-                totalInvValue.toString(),
+                '$totalInvValue',
                 style: TextStyle(
                   color: Colors.brown[300],
                 ),

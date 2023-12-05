@@ -15,7 +15,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   bool _isLoading = true;
 
   // function to fetch all inventory data from the database
-  void _refreshInventoryList() async {
+  void refreshInventoryList() async {
     final inventoryData = await SQLHelper.fetchInventoryItems();
     setState(() {
       _inventoryList = inventoryData;
@@ -26,15 +26,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   void initState() {
     super.initState();
-    _refreshInventoryList(); // loads the inventory items list when the app starts
+    refreshInventoryList(); // loads the inventory items list when the app starts
   }
 
   final TextEditingController _txtCode = TextEditingController();
   final TextEditingController _txtName = TextEditingController();
   final TextEditingController _txtBP = TextEditingController();
-
-  final TextEditingController txtQty = TextEditingController();
-  final TextEditingController txtUnitSP = TextEditingController();
+  final TextEditingController _txtQty = TextEditingController();
+  final TextEditingController _txtUnitSP = TextEditingController();
 
   // This function will be triggered when the floating button is pressed
   // It will also be triggered when you want to update an item
@@ -53,6 +52,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
       context: context,
       elevation: 5,
       isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
       builder: (_) => Container(
         padding: EdgeInsets.only(
           top: 15,
@@ -60,7 +62,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
           right: 15,
 
           // this will prevent the soft keyboard from covering the textfields
-          bottom: MediaQuery.of(context).viewInsets.bottom + 120,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 10,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -81,8 +83,22 @@ class _InventoryScreenState extends State<InventoryScreen> {
               height: 10,
             ),
             TextField(
+              controller: _txtQty,
+              decoration: const InputDecoration(hintText: 'quantity available'),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            TextField(
               controller: _txtBP,
               decoration: const InputDecoration(hintText: 'buying price'),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            TextField(
+              controller: _txtUnitSP,
+              decoration: const InputDecoration(hintText: 'unit selling price'),
             ),
             const SizedBox(
               height: 10,
@@ -117,22 +133,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
   // add an item to inventory table in the database
   Future<void> _addInventoryItem() async {
     await SQLHelper.addInventoryItem(
-      _txtCode.text,
-      _txtName.text,
-      int.parse(_txtBP.text),
-    );
-    _refreshInventoryList();
+        _txtCode.text,
+        _txtName.text,
+        int.parse(_txtBP.text),
+        int.parse(_txtQty.text),
+        int.parse(_txtUnitSP.text));
+    refreshInventoryList();
   }
 
   // update an existing inventory item
   Future<void> _updateInventoryItem(int id) async {
     await SQLHelper.updateInventoryItem(
-      id,
-      _txtCode.text,
-      _txtName.text,
-      int.parse(_txtBP.text),
-    );
-    _refreshInventoryList();
+        id,
+        _txtCode.text,
+        _txtName.text,
+        int.parse(_txtBP.text),
+        int.parse(_txtQty.text),
+        int.parse(_txtUnitSP.text));
+    refreshInventoryList();
   }
 
   // delete an item
