@@ -40,15 +40,23 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   // This function will be triggered when the floating button is pressed
   // It will also be triggered when you want to update an item
-  void _showForm(int? id) async {
-    if (id != null) {
+  void _showForm(String? pCode) async {
+    if (pCode != null) {
       // id == null -> create new item
       // id != null -> update an existing item
-      final existingInventoryData =
-          _inventoryList.firstWhere((element) => element['id'] == id);
+      final existingInventoryData = _inventoryList
+          .firstWhere((element) => element['productCode'] == pCode);
       _txtCode.text = existingInventoryData['productCode'];
       _txtName.text = existingInventoryData['name'];
-      _txtBP.text = existingInventoryData['buyingPrice'];
+      _txtQty.text = (existingInventoryData['quantity']).toString();
+      _txtBP.text = (existingInventoryData['buyingPrice']).toString();
+      _txtUnitSP.text = (existingInventoryData['unitSellingPrice']).toString();
+    } else {
+      _txtCode.text = '';
+      _txtName.text = '';
+      _txtQty.text = '';
+      _txtBP.text = '';
+      _txtUnitSP.text = '';
     }
 
     showModalBottomSheet(
@@ -108,24 +116,27 @@ class _InventoryScreenState extends State<InventoryScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (id == null) {
+                if (pCode == null) {
                   await _addInventoryItem();
                 }
 
-                if (id != null) {
-                  await _updateInventoryItem(id);
+                if (pCode != null) {
+                  await _updateInventoryItem(pCode);
                 }
 
                 // Clear the text fields
                 _txtCode.text = '';
                 _txtName.text = '';
+                _txtQty.text = '';
                 _txtBP.text = '';
+                _txtUnitSP.text = '';
 
                 // close the bottom sheet
                 if (!mounted) return;
                 Navigator.of(context).pop();
               },
-              child: Text(id == null ? 'add new entry..' : 'update entry...'),
+              child:
+                  Text(pCode == null ? 'add new entry..' : 'update entry...'),
             ),
           ],
         ),
@@ -135,6 +146,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   // add an item to inventory table in the database
   Future<void> _addInventoryItem() async {
+    await SQLHelper.db();
     await SQLHelper.addInventoryItem(
         _txtCode.text,
         _txtName.text,
@@ -145,9 +157,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   // update an existing inventory item
-  Future<void> _updateInventoryItem(int id) async {
+  Future<void> _updateInventoryItem(String pCode) async {
     await SQLHelper.updateInventoryItem(
-        id,
         _txtCode.text,
         _txtName.text,
         int.parse(_txtBP.text),
@@ -194,26 +205,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         (_inventoryList != null) ? _inventoryList.length : 0,
                     itemBuilder: (BuildContext context, int index) {
                       return Dismissible(
-                        key: UniqueKey(),
+                        key: Key(_inventoryList[index]['name']),
                         onDismissed: (direction) {
-                          //print(_inventoryList);
-                          //SQLHelper.deleteInventoryItem(inventoryList[index]['productCode']);
-
                           _deleteInventoryItem(
                               _inventoryList[index]['productCode']);
-                          // setState(() {
-                          //   Map<String, dynamic> invMap = Map<String, dynamic>.from(
-                          //       _inventoryList[index]['productCode']);
 
-                          // });
-                          //_inventoryList.removeAt(index);
                           refreshInventoryList();
                         },
                         child: Card(
                           color: Colors.white,
                           elevation: 1.0,
                           child: ListTile(
-                            title: Text((_inventoryList[index]['productCode'])),
+                            title: Text((_inventoryList[index]['name'])),
                             subtitle: Text(
                                 "qty:${_inventoryList[index]['quantity'].toString()} BP:${_inventoryList[index]['buyingPrice'].toString()} SP: ${_inventoryList[index]['unitSellingPrice'].toString()}"),
                             trailing: GestureDetector(
@@ -223,9 +226,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
                               ),
                               onTap: () {
                                 _deleteInventoryItem(
-                                    _inventoryList[index]['id']);
+                                    _inventoryList[index]['productCode']);
                               },
                             ),
+                            onTap: () {
+                              _showForm(_inventoryList[index]['productCode']);
+                            },
                           ),
                         ),
                       );

@@ -26,7 +26,7 @@ class SQLHelper {
   static Future<void> createTables(sql.Database database) async {
     await database.execute('''
         CREATE TABLE $inventoryTable (
-          $columnInvId INTEGER IDENTITY(1, 1),
+          $columnInvId INT IDENTITY(1, 1),
           $columnInvCode CHAR(30) NOT NULL PRIMARY KEY,
           $columnInvName TEXT,
           $columnInvQty INTEGER,
@@ -35,6 +35,13 @@ class SQLHelper {
           $columnCreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       ''');
+    testInsert();
+  }
+
+  static Future testInsert() async {
+    final db = await SQLHelper.db();
+    await db.execute(
+        'INSERT INTO $inventoryTable VALUES(0, "12", "fruit", 2, 200, 10, "02-02-2021")');
   }
 
   static Future<sql.Database> db() async {
@@ -70,8 +77,8 @@ class SQLHelper {
   }
 
   // update an inventory item by id
-  static Future<int> updateInventoryItem(int id, String pCode, String name,
-      int qty, int buyingPrice, int unitSp) async {
+  static Future<int> updateInventoryItem(
+      String pCode, String name, int qty, int buyingPrice, int unitSp) async {
     final db = await SQLHelper.db();
 
     final inventoryData = {
@@ -82,13 +89,13 @@ class SQLHelper {
       'unitSellingPrice': unitSp,
     };
 
-    final result = await db.update(
+    final id = await db.update(
       '$inventoryTable',
       inventoryData,
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'productCode = ?',
+      whereArgs: [pCode],
     );
-    return result;
+    return id;
   }
 
   // read all items (inventory list)
@@ -106,15 +113,6 @@ class SQLHelper {
       whereArgs: [pCode],
     );
     return result;
-  }
-
-  // calculate total inventory value
-  static Future calculateInventoryValue() async {
-    final db = await SQLHelper.db();
-    final result = await db
-        .rawQuery('SELECT SUM(buyingPrice) AS TOTAL_INV FROM $inventoryTable');
-    //print(result.toList());
-    return result.toList();
   }
 
   // fetch all inventory data from the database
