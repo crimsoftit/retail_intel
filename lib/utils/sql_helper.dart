@@ -2,7 +2,6 @@
 
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart' as sql;
 
 class SQLHelper {
@@ -27,7 +26,7 @@ class SQLHelper {
   static Future<void> createTables(sql.Database database) async {
     await database.execute('''
         CREATE TABLE $inventoryTable (
-          $columnInvId INTEGER,
+          $columnInvId INTEGER IDENTITY(1, 1),
           $columnInvCode CHAR(30) NOT NULL PRIMARY KEY,
           $columnInvName TEXT,
           $columnInvQty INTEGER,
@@ -99,17 +98,14 @@ class SQLHelper {
   }
 
   // delete inventory item from the database
-  static Future<void> deleteInventoryItem(int id) async {
+  static Future<int> deleteInventoryItem(String pCode) async {
     final db = await SQLHelper.db();
-    try {
-      await db.delete(
-        '$inventoryTable',
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-    } catch (err) {
-      debugPrint("Something went wrong when deleting an item: $err");
-    }
+    int result = await db.delete(
+      '$inventoryTable',
+      where: 'productCode = ?',
+      whereArgs: [pCode],
+    );
+    return result;
   }
 
   // calculate total inventory value

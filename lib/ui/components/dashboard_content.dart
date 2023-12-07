@@ -11,6 +11,18 @@ class DashboardContent extends StatefulWidget {
 
 class _DashboardContentState extends State<DashboardContent> {
   @override
+  void initState() {
+    super.initState();
+    _stateUpdate();
+  }
+
+  void _stateUpdate() {
+    setState() {}
+
+    print("refresh done");
+  }
+
+  @override
   Widget build(BuildContext context) {
     return const SafeArea(
       child: SingleChildScrollView(

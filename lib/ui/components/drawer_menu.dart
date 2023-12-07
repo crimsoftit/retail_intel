@@ -5,6 +5,10 @@ import 'package:retail_intel/constants/constants.dart';
 
 import 'package:retail_intel/ui/inventory_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:retail_intel/ui/responsive/desktop_scaffold.dart';
+import 'package:retail_intel/ui/responsive/mobile_scaffold.dart';
+import 'package:retail_intel/ui/responsive/responsive_layout.dart';
+import 'package:retail_intel/ui/responsive/tablet_scaffold.dart';
 
 class DrawerMenu extends StatelessWidget {
   const DrawerMenu({super.key});
@@ -27,7 +31,20 @@ class DrawerMenu extends StatelessWidget {
           DrawerListTile(
             title: 'D A S H B O A R D',
             svgSrc: 'assets/icons/Dashboard.svg',
-            tap: () {},
+            tap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return const ResponsiveLayout(
+                      mobileScaffold: MobileScaffold(),
+                      tabletScaffold: TabletScaffold(),
+                      desktopScaffold: DesktopScaffold(),
+                    );
+                  },
+                ),
+              );
+            },
           ),
           DrawerListTile(
             title: 'M E S S A G E S',

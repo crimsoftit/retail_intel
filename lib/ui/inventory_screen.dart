@@ -1,3 +1,6 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:retail_intel/ui/responsive/mobile_scaffold.dart';
 import 'package:retail_intel/utils/sql_helper.dart';
 import 'package:flutter/material.dart';
 
@@ -135,8 +138,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     await SQLHelper.addInventoryItem(
         _txtCode.text,
         _txtName.text,
-        int.parse(_txtBP.text),
         int.parse(_txtQty.text),
+        int.parse(_txtBP.text),
         int.parse(_txtUnitSP.text));
     refreshInventoryList();
   }
@@ -153,53 +156,87 @@ class _InventoryScreenState extends State<InventoryScreen> {
     refreshInventoryList();
   }
 
-  // delete an item
-  void _deleteInventoryItem(int id) async {
-    await SQLHelper.deleteInventoryItem(id);
+  //delete an item
+  void _deleteInventoryItem(String pCode) async {
+    await SQLHelper.deleteInventoryItem(pCode);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('item successfully deleted...'),
       ),
     );
+    refreshInventoryList();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inventory List'),
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator.adaptive(),
-            )
-          : ListView.builder(
-              itemCount: _inventoryList.length,
-              itemBuilder: (context, index) => Card(
-                color: Colors.brown[300],
-                margin: const EdgeInsets.all(15),
-                child: ListTile(
-                  title: Text(_inventoryList[index]['name']),
-                  subtitle: Text(_inventoryList[index]['createdAt']),
-                  trailing: SizedBox(
-                    width: 100,
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () =>
-                              _deleteInventoryItem(_inventoryList[index]['id']),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+  Widget build(BuildContext context) => WillPopScope(
+        onWillPop: () async {
+          debugPrint('back button pressed');
+          const MobileScaffold();
+
+          return true;
+        },
+        child: RefreshIndicator.adaptive(
+          onRefresh: () async {
+            refreshInventoryList();
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Inventory List'),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showForm(null),
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
+            body: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator.adaptive(),
+                  )
+                : ListView.builder(
+                    // ignore: unnecessary_null_comparison
+                    itemCount:
+                        // ignore: unnecessary_null_comparison
+                        (_inventoryList != null) ? _inventoryList.length : 0,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Dismissible(
+                        key: UniqueKey(),
+                        onDismissed: (direction) {
+                          //print(_inventoryList);
+                          //SQLHelper.deleteInventoryItem(inventoryList[index]['productCode']);
+
+                          _deleteInventoryItem(
+                              _inventoryList[index]['productCode']);
+                          // setState(() {
+                          //   Map<String, dynamic> invMap = Map<String, dynamic>.from(
+                          //       _inventoryList[index]['productCode']);
+
+                          // });
+                          //_inventoryList.removeAt(index);
+                          refreshInventoryList();
+                        },
+                        child: Card(
+                          color: Colors.white,
+                          elevation: 1.0,
+                          child: ListTile(
+                            title: Text((_inventoryList[index]['productCode'])),
+                            subtitle: Text(
+                                "qty:${_inventoryList[index]['quantity'].toString()} BP:${_inventoryList[index]['buyingPrice'].toString()} SP: ${_inventoryList[index]['unitSellingPrice'].toString()}"),
+                            trailing: GestureDetector(
+                              child: const Icon(
+                                Icons.delete,
+                                color: Colors.grey,
+                              ),
+                              onTap: () {
+                                _deleteInventoryItem(
+                                    _inventoryList[index]['id']);
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () {
+                _showForm(null);
+              },
+              child: const Icon(Icons.add),
+            ),
+          ),
+        ),
+      );
 }
