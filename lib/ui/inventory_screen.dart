@@ -1,8 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:retail_intel/ui/responsive/mobile_scaffold.dart';
 import 'package:retail_intel/utils/sql_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:clock/clock.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -16,6 +20,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   List<Map<String, dynamic>> _inventoryList = [];
 
   bool _isLoading = true;
+
+  var date = DateFormat('yyyy-MM-dd - kk:mm').format(clock.now());
 
   // function to fetch all inventory data from the database
   void refreshInventoryList() async {
@@ -31,6 +37,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     super.initState();
     refreshInventoryList(); // loads the inventory items list when the app starts
   }
+
+  final TextEditingController _searchController = TextEditingController();
 
   final TextEditingController _txtCode = TextEditingController();
   final TextEditingController _txtName = TextEditingController();
@@ -57,7 +65,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
       _txtQty.text = '';
       _txtBP.text = '';
       _txtUnitSP.text = '';
+      scanBarCodeNormal();
     }
+
+    final formKey = GlobalKey<FormState>();
+
+    var textStyle = Theme.of(context).textTheme.bodyMedium;
 
     showModalBottomSheet(
       context: context,
@@ -78,62 +91,139 @@ class _InventoryScreenState extends State<InventoryScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            TextField(
-              controller: _txtCode,
-              decoration: const InputDecoration(hintText: 'product barcode'),
+          children: <Widget>[
+            // form to handle input data
+            Form(
+              key: formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _txtCode,
+                    decoration: InputDecoration(
+                      labelText: 'product barcode',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'product barcode is required!';
+                      } else if (value.length <= 2) {
+                        return 'product barcode should be more than 2 characters!';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _txtName,
+                    decoration: InputDecoration(
+                      labelText: 'product name',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'product name is required!';
+                      } else if (value.length < 2) {
+                        return 'product name should be more than 2 characters!';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _txtQty,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: false,
+                      signed: false,
+                    ),
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'qty/no. of units',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'field qty is required!';
+                        // ignore: unrelated_type_equality_checks
+                      } else if (value == 0) {
+                        return 'invalid value for qty!';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _txtBP,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: false,
+                      signed: false,
+                    ),
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'buying price',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'field buying price is required!';
+                        // ignore: unrelated_type_equality_checks
+                      } else if (value == 0) {
+                        return 'invalid value for buying price!';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _txtUnitSP,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: false,
+                      signed: false,
+                    ),
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'unit selling price',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'field unit selling is required!';
+                        // ignore: unrelated_type_equality_checks
+                      } else if (value == 0) {
+                        return 'invalid value for unit selling!';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(
-              height: 10,
-            ),
-            TextField(
-              controller: _txtName,
-              decoration: const InputDecoration(hintText: 'product name'),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            TextField(
-              controller: _txtQty,
-              decoration: const InputDecoration(hintText: 'quantity available'),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            TextField(
-              controller: _txtBP,
-              decoration: const InputDecoration(hintText: 'buying price'),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            TextField(
-              controller: _txtUnitSP,
-              decoration: const InputDecoration(hintText: 'unit selling price'),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
+
             ElevatedButton(
               onPressed: () async {
-                if (pCode == null) {
-                  await _addInventoryItem();
+                // validator returns true if the form is valid, or false otherwise.
+                if (formKey.currentState!.validate()) {
+                  if (pCode == null) {
+                    await _addInventoryItem();
+                  }
+
+                  if (pCode != null) {
+                    await _updateInventoryItem(pCode);
+                  }
+
+                  // Clear the text fields
+                  _txtCode.text = '';
+                  _txtName.text = '';
+                  _txtQty.text = '';
+                  _txtBP.text = '';
+                  _txtUnitSP.text = '';
+
+                  // close the bottom sheet
+                  if (!mounted) return;
+                  Navigator.of(context).pop();
                 }
-
-                if (pCode != null) {
-                  await _updateInventoryItem(pCode);
-                }
-
-                // Clear the text fields
-                _txtCode.text = '';
-                _txtName.text = '';
-                _txtQty.text = '';
-                _txtBP.text = '';
-                _txtUnitSP.text = '';
-
-                // close the bottom sheet
-                if (!mounted) return;
-                Navigator.of(context).pop();
               },
               child:
                   Text(pCode == null ? 'add new entry..' : 'update entry...'),
@@ -152,7 +242,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
         _txtName.text,
         int.parse(_txtQty.text),
         int.parse(_txtBP.text),
-        int.parse(_txtUnitSP.text));
+        int.parse(_txtUnitSP.text),
+        date);
     refreshInventoryList();
   }
 
@@ -163,7 +254,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
         _txtName.text,
         int.parse(_txtBP.text),
         int.parse(_txtQty.text),
-        int.parse(_txtUnitSP.text));
+        int.parse(_txtUnitSP.text),
+        date);
     refreshInventoryList();
   }
 
@@ -176,6 +268,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ),
     );
     refreshInventoryList();
+  }
+
+  // scan product barcode
+  void scanBarCodeNormal() async {
+    String scanResults;
+
+    try {
+      scanResults = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'cancel', true, ScanMode.BARCODE);
+      _txtCode.text = scanResults;
+    } on PlatformException {
+      scanResults = "ERROR!! failed to get platform version";
+    }
+    _txtCode.text = scanResults;
   }
 
   @override
@@ -191,8 +297,26 @@ class _InventoryScreenState extends State<InventoryScreen> {
             refreshInventoryList();
           },
           child: Scaffold(
+            backgroundColor: Colors.brown[100],
             appBar: AppBar(
-              title: const Text('Inventory List'),
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.brown[300],
+              // search field
+              title: TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white),
+                cursorColor: Colors.white,
+                decoration: const InputDecoration(
+                  hintText: 'Search inventory...',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (value) {
+                  // Perform search functionality here
+                },
+              ),
             ),
             body: _isLoading
                 ? const Center(
@@ -218,7 +342,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           child: ListTile(
                             title: Text((_inventoryList[index]['name'])),
                             subtitle: Text(
-                                "qty:${_inventoryList[index]['quantity'].toString()} BP:${_inventoryList[index]['buyingPrice'].toString()} SP: ${_inventoryList[index]['unitSellingPrice'].toString()}"),
+                                "qty:${_inventoryList[index]['quantity'].toString()} BP:${_inventoryList[index]['buyingPrice'].toString()} SP: ${_inventoryList[index]['unitSellingPrice'].toString()} Modified: ${_inventoryList[index]['createdAt']}"),
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.brown[300],
+                              foregroundColor: Colors.white,
+                              child: Text(_inventoryList[index]['name'][0]
+                                  .toUpperCase()),
+                            ),
                             trailing: GestureDetector(
                               child: const Icon(
                                 Icons.delete,

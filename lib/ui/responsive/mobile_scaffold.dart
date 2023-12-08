@@ -12,6 +12,9 @@ class MobileScaffold extends StatefulWidget {
 
 class _MobileScaffoldState extends State<MobileScaffold> {
   final TextEditingController _searchController = TextEditingController();
+
+  //final bool _isLoading = true;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

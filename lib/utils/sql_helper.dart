@@ -10,8 +10,11 @@ class SQLHelper {
 
   static const salesTable = 'sales';
   static const columnSalesId = 'id';
+  static const columnSalesPcode = 'productCode';
   static const columnSalesName = 'name';
-  static const columnSalesUnitSp = 'unitSellingPrice';
+  static const columnSalesQty = 'quantity';
+  static const columnSalesUnitSp = 'price';
+  static const columnSalesDate = 'date';
 
   static const inventoryTable = 'inventory';
   static const columnInvId = 'id';
@@ -32,7 +35,18 @@ class SQLHelper {
           $columnInvQty INTEGER,
           $columnInvBp INTEGER,
           $columnInvUnitSp INTEGER,
-          $columnCreatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+          $columnCreatedAt TEXT NOT NULL
+        )
+      ''');
+    await database.execute('''
+        CREATE TABLE $salesTable (
+          $columnSalesId INTEGER PRIMARY KEY AUTOINCREMENT,
+          $columnSalesPcode CHAR(30) NOT NULL,
+          $columnSalesName TEXT,
+          $columnSalesQty INTEGER,
+          $columnSalesUnitSp INTEGER,
+          $columnSalesDate TEXT,
+          FOREIGN KEY(productCode) REFERENCES $inventoryTable(productCode)
         )
       ''');
     testInsert();
@@ -41,7 +55,9 @@ class SQLHelper {
   static Future testInsert() async {
     final db = await SQLHelper.db();
     await db.execute(
-        'INSERT INTO $inventoryTable VALUES(0, "12", "fruit", 2, 200, 10, "02-02-2021")');
+        'INSERT INTO $inventoryTable VALUES (0, "12", "fruit", 2, 200, 10, "02-02-2021")');
+    await db.execute(
+        'INSERT INTO $salesTable VALUES (0, "12", "fruit", 1, 10, "02-03-2021")');
   }
 
   static Future<sql.Database> db() async {
@@ -56,7 +72,7 @@ class SQLHelper {
 
   // create new item (inventory)
   static Future<int> addInventoryItem(String productCode, String name, int qty,
-      int buyingPrice, int unitSp) async {
+      int buyingPrice, int unitSp, String date) async {
     final db = await SQLHelper.db();
 
     final inventoryData = {
@@ -65,6 +81,7 @@ class SQLHelper {
       'quantity': qty,
       'buyingPrice': buyingPrice,
       'unitSellingPrice': unitSp,
+      'createdAt': date,
     };
 
     final id = await db.insert(
@@ -77,8 +94,8 @@ class SQLHelper {
   }
 
   // update an inventory item by id
-  static Future<int> updateInventoryItem(
-      String pCode, String name, int qty, int buyingPrice, int unitSp) async {
+  static Future<int> updateInventoryItem(String pCode, String name, int qty,
+      int buyingPrice, int unitSp, String date) async {
     final db = await SQLHelper.db();
 
     final inventoryData = {
@@ -87,6 +104,7 @@ class SQLHelper {
       'quantity': qty,
       'buyingPrice': buyingPrice,
       'unitSellingPrice': unitSp,
+      'createdAt': date,
     };
 
     final id = await db.update(

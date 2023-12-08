@@ -11,8 +11,6 @@ class AnalyticCards extends StatefulWidget {
 class _AnalyticCardsState extends State<AnalyticCards> {
   num totalInvValue = 0;
 
-  bool _isLoading = true;
-
   // all inventory items in the database
   List inventoryList = [];
 
@@ -22,7 +20,7 @@ class _AnalyticCardsState extends State<AnalyticCards> {
     for (var element in inventoryList) {
       totalInvValue = (totalInvValue) + element['buyingPrice'];
     }
-    print(totalInvValue);
+    //print(totalInvValue);
     setState(() {
       totalInvValue = totalInvValue;
     });
@@ -33,7 +31,7 @@ class _AnalyticCardsState extends State<AnalyticCards> {
     super.initState();
     calculateInventoryValue();
     // print("initState Called");
-    print(totalInvValue);
+    //print(totalInvValue);
   }
 
   @override
