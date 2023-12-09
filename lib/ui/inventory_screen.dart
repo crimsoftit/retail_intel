@@ -350,9 +350,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                   .toUpperCase()),
                             ),
                             trailing: GestureDetector(
-                              child: const Icon(
+                              child: Icon(
                                 Icons.delete,
-                                color: Colors.grey,
+                                color: Colors.red[300],
                               ),
                               onTap: () {
                                 _deleteInventoryItem(

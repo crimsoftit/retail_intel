@@ -8,14 +8,6 @@ class SQLHelper {
   static const _databaseName = "duara.db";
   static const _databaseVersion = 1;
 
-  static const salesTable = 'sales';
-  static const columnSalesId = 'id';
-  static const columnSalesPcode = 'productCode';
-  static const columnSalesName = 'name';
-  static const columnSalesQty = 'quantity';
-  static const columnSalesUnitSp = 'price';
-  static const columnSalesDate = 'date';
-
   static const inventoryTable = 'inventory';
   static const columnInvId = 'id';
   static const columnInvCode = 'productCode';
@@ -25,10 +17,18 @@ class SQLHelper {
   static const columnInvUnitSp = 'unitSellingPrice';
   static const columnCreatedAt = 'createdAt';
 
+  static const salesTable = 'sales';
+  static const columnSalesId = 'id';
+  static const columnSalesPcode = 'productCode';
+  static const columnSalesName = 'name';
+  static const columnSalesQty = 'quantity';
+  static const columnSalesUnitSp = 'price';
+  static const columnSalesDate = 'date';
+
   // SQL code to create the database tables
   static Future<void> createTables(sql.Database database) async {
     await database.execute('''
-        CREATE TABLE $inventoryTable (
+        CREATE TABLE IF NOT EXISTS $inventoryTable (
           $columnInvId INT IDENTITY(1, 1),
           $columnInvCode CHAR(30) NOT NULL PRIMARY KEY,
           $columnInvName TEXT,
@@ -39,7 +39,7 @@ class SQLHelper {
         )
       ''');
     await database.execute('''
-        CREATE TABLE $salesTable (
+        CREATE TABLE IF NOT EXISTS $salesTable (
           $columnSalesId INTEGER PRIMARY KEY AUTOINCREMENT,
           $columnSalesPcode CHAR(30) NOT NULL,
           $columnSalesName TEXT,
@@ -49,7 +49,7 @@ class SQLHelper {
           FOREIGN KEY(productCode) REFERENCES $inventoryTable(productCode)
         )
       ''');
-    testInsert();
+    //testInsert();
   }
 
   static Future testInsert() async {
@@ -122,6 +122,14 @@ class SQLHelper {
     return db.query('$inventoryTable', orderBy: '$columnCreatedAt');
   }
 
+  // read all items (sold items list)
+  static Future<List<Map<String, dynamic>>> fetchSoldItems() async {
+    final db = await SQLHelper.db();
+    //var rawQuery = db.rawQuery('SELECT * FROM $salesTable ');
+    var ormResult = db.query('$salesTable', orderBy: '$columnSalesDate');
+    return ormResult;
+  }
+
   // delete inventory item from the database
   static Future<int> deleteInventoryItem(String pCode) async {
     final db = await SQLHelper.db();
@@ -131,6 +139,17 @@ class SQLHelper {
       whereArgs: [pCode],
     );
     return result;
+  }
+
+  // delete sold item from the database
+  static Future<int> deleteSoldItem(String pCode) async {
+    final db = await SQLHelper.db();
+    int id = await db.delete(
+      '$salesTable',
+      where: 'productCode = ?',
+      whereArgs: [pCode],
+    );
+    return id;
   }
 
   // fetch all inventory data from the database

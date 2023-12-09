@@ -9,6 +9,7 @@ import 'package:retail_intel/ui/responsive/desktop_scaffold.dart';
 import 'package:retail_intel/ui/responsive/mobile_scaffold.dart';
 import 'package:retail_intel/ui/responsive/responsive_layout.dart';
 import 'package:retail_intel/ui/responsive/tablet_scaffold.dart';
+import 'package:retail_intel/ui/sold_items_screen.dart';
 
 class DrawerMenu extends StatelessWidget {
   const DrawerMenu({super.key});
@@ -65,10 +66,12 @@ class DrawerMenu extends StatelessWidget {
             title: 'S A L E S',
             svgSrc: 'assets/icons/stock.svg',
             tap: () async {
-              // await Navigator.push(context,
-              //     MaterialPageRoute(builder: (context) {
-              //   return const SoldItemsScreen();
-              // }));
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) {
+                  return const SoldItemsScreen();
+                }),
+              );
             },
           ),
           const Padding(

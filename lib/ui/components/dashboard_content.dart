@@ -22,14 +22,6 @@ class _DashboardContentState extends State<DashboardContent> {
     print("refresh done");
   }
 
-  // List<Analytics> aData = [
-  //   Analytics(title: 'T. Inventory', invData: '3000'),
-  // ];
-
-  // Widget analyticsTemplate(data) {
-  //   return Card()
-  // }
-
   @override
   Widget build(BuildContext context) {
     return const SafeArea(
