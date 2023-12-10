@@ -70,6 +70,10 @@ class SQLHelper {
     );
   }
 
+  /*------------
+  INVENTORY TABLE
+  ------------*/
+
   // create new item (inventory)
   static Future<int> addInventoryItem(String productCode, String name, int qty,
       int buyingPrice, int unitSp, String date) async {
@@ -157,5 +161,49 @@ class SQLHelper {
     var db = await SQLHelper.db();
     var result = await db.rawQuery("SELECT * from inventory");
     return result.toList();
+  }
+
+  /*---------
+  SALES TABLE 
+  -----------*/
+
+  // create new item (sales table)
+  static Future<int> addSoldItem(
+      String productCode, String name, int qty, int price, String date) async {
+    final db = await SQLHelper.db();
+    final soldItem = {
+      'productCode': productCode,
+      'name': name,
+      'quantity': qty,
+      'price': price,
+      'date': date,
+    };
+
+    final id = await db.insert(
+      '$salesTable',
+      soldItem,
+    );
+
+    return id;
+  }
+
+  // update sold item entry by id (sales table)
+  static Future<int> updateSoldItem(
+      String pCode, String name, int qty, int price, String date) async {
+    final db = await SQLHelper.db();
+    final updateItem = {
+      'productCode': pCode,
+      'name': name,
+      'quantity': qty,
+      'price': price,
+      'date': date
+    };
+    final id = db.update(
+      '$salesTable',
+      updateItem,
+      where: 'productCode = ?',
+      whereArgs: [pCode],
+    );
+    return id;
   }
 }

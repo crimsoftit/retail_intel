@@ -1,6 +1,11 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 var myDefaultBackground = Colors.orange[100];
+
+// current date
+var date = DateFormat('yyyy-MM-dd - kk:mm').format(clock.now());
 
 // Default App Padding
 const appPadding = 2.0;

@@ -2,11 +2,10 @@
 
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:retail_intel/constants/constants.dart';
 import 'package:retail_intel/ui/responsive/mobile_scaffold.dart';
 import 'package:retail_intel/utils/sql_helper.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:clock/clock.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -20,8 +19,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
   List<Map<String, dynamic>> _inventoryList = [];
 
   bool _isLoading = true;
-
-  var date = DateFormat('yyyy-MM-dd - kk:mm').format(clock.now());
 
   // function to fetch all inventory data from the database
   void refreshInventoryList() async {
@@ -50,8 +47,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   // It will also be triggered when you want to update an item
   void _showForm(String? pCode) async {
     if (pCode != null) {
-      // id == null -> create new item
-      // id != null -> update an existing item
+      // pCode == null -> create new item
+      // pCode != null -> update an existing item
       final existingInventoryData = _inventoryList
           .firstWhere((element) => element['productCode'] == pCode);
       _txtCode.text = existingInventoryData['productCode'];
@@ -197,36 +194,35 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       return null;
                     },
                   ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      // validator returns true if the form is valid, or false otherwise.
+                      if (formKey.currentState!.validate()) {
+                        if (pCode == null) {
+                          await _addInventoryItem();
+                        }
+
+                        if (pCode != null) {
+                          await _updateInventoryItem(pCode);
+                        }
+
+                        // Clear the text fields
+                        _txtCode.text = '';
+                        _txtName.text = '';
+                        _txtQty.text = '';
+                        _txtBP.text = '';
+                        _txtUnitSP.text = '';
+
+                        // close the bottom sheet
+                        if (!mounted) return;
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Text(
+                        pCode == null ? 'add new entry..' : 'update entry...'),
+                  ),
                 ],
               ),
-            ),
-
-            ElevatedButton(
-              onPressed: () async {
-                // validator returns true if the form is valid, or false otherwise.
-                if (formKey.currentState!.validate()) {
-                  if (pCode == null) {
-                    await _addInventoryItem();
-                  }
-
-                  if (pCode != null) {
-                    await _updateInventoryItem(pCode);
-                  }
-
-                  // Clear the text fields
-                  _txtCode.text = '';
-                  _txtName.text = '';
-                  _txtQty.text = '';
-                  _txtBP.text = '';
-                  _txtUnitSP.text = '';
-
-                  // close the bottom sheet
-                  if (!mounted) return;
-                  Navigator.of(context).pop();
-                }
-              },
-              child:
-                  Text(pCode == null ? 'add new entry..' : 'update entry...'),
             ),
           ],
         ),

@@ -1,8 +1,9 @@
 // ignore_for_file: unnecessary_null_comparison
 
-import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:retail_intel/constants/constants.dart';
 import 'package:retail_intel/ui/responsive/mobile_scaffold.dart';
 import 'package:retail_intel/utils/sql_helper.dart';
 
@@ -15,21 +16,194 @@ class SoldItemsScreen extends StatefulWidget {
 
 class _SoldItemsScreenState extends State<SoldItemsScreen> {
   // all inventory items in the database
+  List<Map<String, dynamic>> _inventoryList = [];
+
+  // all sold items in the database
   List<Map<String, dynamic>> _soldItemsList = [];
 
   bool _isLoading = true;
 
-  var date = DateFormat('yyyy-MM-dd - kk:mm').format(clock.now());
+  final TextEditingController _searchController = TextEditingController();
+
+  final TextEditingController _txtCode = TextEditingController();
+  final TextEditingController _txtName = TextEditingController();
+  final TextEditingController _txtQty = TextEditingController();
+  final TextEditingController _txtPrice = TextEditingController();
+
+  final formKey = GlobalKey<FormState>();
+  int availableStockQty = 0;
 
   @override
   void initState() {
     super.initState();
-    refreshSoldItemsList(); // loads the inventory items list when the app starts
+
+    // loads the sold items list when the app starts
+    refreshSoldItemsList();
+
+    print(_inventoryList);
   }
 
-  // function to show input form
+  // This function will be triggered when the floating button is pressed
+  // It will also be triggered when you want to update an item
+  void _showForm(String? productCode) async {
+    if (productCode != null) {
+      // pCode == null -> create new item
+      // pCode != null -> update an existing item
+      final existingEntry = _soldItemsList
+          .firstWhere((element) => element['productCode'] == productCode);
+      _txtCode.text = existingEntry['productCode'];
+      _txtName.text = existingEntry['name'];
+      _txtQty.text = (existingEntry['quantity']).toString();
+      _txtPrice.text = (existingEntry['price']).toString();
+    } else {
+      _txtCode.text = '';
+      _txtName.text = '';
+      _txtQty.text = '';
+      _txtPrice.text = '';
 
-  final TextEditingController _searchController = TextEditingController();
+      scanBarcode();
+    }
+    var textStyle = Theme.of(context).textTheme.bodyMedium;
+
+    showModalBottomSheet(
+      context: context,
+      elevation: 5.0,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10.0),
+      ),
+      builder: (_) => Container(
+        padding: EdgeInsets.only(
+          top: 15,
+          left: 15,
+          right: 15,
+
+          // this will prevent the soft keyboard from covering the fields
+          bottom: MediaQuery.of(context).viewInsets.bottom + 10,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            // form to handle input data
+            Form(
+              key: formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _txtCode,
+                    decoration: InputDecoration(
+                      labelText: 'product barcode',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'product barcode is required!';
+                      } else if (value.length <= 2) {
+                        return 'product barcode should be more than 2 characters!';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _txtName,
+                    decoration: InputDecoration(
+                      labelText: 'product name',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'product name is required!';
+                      } else if (value.length < 2) {
+                        return 'product name should be more than 2 characters!';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _txtQty,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: false,
+                      signed: false,
+                    ),
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                    decoration: InputDecoration(
+                      labelText: (availableStockQty != 0)
+                          ? 'qty/no. of units($availableStockQty available)'
+                          : 'qty/no. of units(0 available)',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'field qty is required!';
+                        // ignore: unrelated_type_equality_checks
+                      } else if (value == 0) {
+                        return 'invalid value for qty!';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _txtPrice,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: false,
+                    ),
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'price',
+                      labelStyle: textStyle,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'field product price is required!';
+                        // ignore: unrelated_type_equality_checks
+                      } else if (value == 0) {
+                        return 'invalid value for product price!';
+                      }
+                      return null;
+                    },
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      // validator returns true if the form is valid, or false otherwise.
+                      if (formKey.currentState!.validate()) {
+                        if (productCode == null) {
+                          await _addItemToSales();
+                        }
+
+                        if (productCode != null) {
+                          await _updateSoldItem(productCode);
+                        }
+
+                        // Clear the text fields
+                        _txtCode.text = '';
+                        _txtName.text = '';
+                        _txtQty.text = '';
+                        _txtPrice.text = '';
+
+                        // close the bottom sheet
+                        if (!mounted) return;
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Text(productCode == null
+                        ? 'add new entry..'
+                        : 'update entry...'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) => WillPopScope(
@@ -102,26 +276,48 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                                     _soldItemsList[index]['productCode']);
                               },
                             ),
+                            onTap: () {
+                              _showForm(_soldItemsList[index]['productCode']);
+                            },
                           ),
                         ),
                       );
                     },
                   ),
             floatingActionButton: FloatingActionButton(
-              onPressed: () {},
+              onPressed: () {
+                _showForm(null);
+              },
               child: const Icon(Icons.add),
             ),
           ),
         ),
       );
 
-  // function to fetch all inventory data from the database
+  // function to fetch/load all soldItems data from the database
   void refreshSoldItemsList() async {
     final soldItems = await SQLHelper.fetchSoldItems();
     setState(() {
       _soldItemsList = soldItems;
       _isLoading = false;
     });
+  }
+
+  // function to fetch/load scanned inventory item from the database
+  Future scannedInventoryItem(String pCode) async {
+    final inventoryData = await SQLHelper.fetchInventoryItems();
+
+    final scannedItem =
+        inventoryData.firstWhere((element) => element['productCode'] == pCode);
+
+    setState(() {
+      _inventoryList = inventoryData;
+      availableStockQty = scannedItem['quantity'];
+    });
+
+    _txtCode.text = scannedItem['productCode'];
+    _txtName.text = scannedItem['name'];
+    _txtPrice.text = (scannedItem['unitSellingPrice']).toString();
   }
 
   // function to delete an item from the sales table in the database
@@ -131,6 +327,45 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('item deleted successfully...'),
     ));
+    refreshSoldItemsList();
+  }
+
+  // function to scan product barcode
+  Future scanBarcode() async {
+    String scanResults;
+
+    try {
+      scanResults = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'cancel', true, ScanMode.BARCODE);
+
+      scannedInventoryItem(scanResults);
+    } on PlatformException {
+      scanResults = "failed to get platform version ..";
+    }
+  }
+
+  // add sold item to sales table in the database
+  Future<void> _addItemToSales() async {
+    await SQLHelper.db();
+    await SQLHelper.addSoldItem(
+      _txtCode.text,
+      _txtName.text,
+      int.parse(_txtPrice.text),
+      int.parse(_txtQty.text),
+      date,
+    );
+    refreshSoldItemsList();
+  }
+
+  // update sold item
+  Future<void> _updateSoldItem(String pCode) async {
+    await SQLHelper.updateSoldItem(
+      _txtCode.text,
+      _txtName.text,
+      int.parse(_txtPrice.text),
+      int.parse(_txtQty.text),
+      date,
+    );
     refreshSoldItemsList();
   }
 }
