@@ -29,6 +29,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
   final TextEditingController _txtName = TextEditingController();
   final TextEditingController _txtQty = TextEditingController();
   final TextEditingController _txtPrice = TextEditingController();
+  final TextEditingController _txtInvQty = TextEditingController();
 
   final formKey = GlobalKey<FormState>();
   int availableStockQty = 0;
@@ -131,9 +132,8 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                       FilteringTextInputFormatter.digitsOnly
                     ],
                     decoration: InputDecoration(
-                      labelText: (availableStockQty != 0)
-                          ? 'qty/no. of units($availableStockQty available)'
-                          : 'qty/no. of units(0 available)',
+                      labelText:
+                          'qty/no. of units(${_txtInvQty.text} available)',
                       labelStyle: textStyle,
                     ),
                     validator: (value) {
@@ -142,6 +142,8 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                         // ignore: unrelated_type_equality_checks
                       } else if (value == 0) {
                         return 'invalid value for qty!';
+                      } else if (int.parse(value) > availableStockQty) {
+                        return 'qty exceeds available stock!';
                       }
                       return null;
                     },
@@ -168,6 +170,13 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                       }
                       return null;
                     },
+                  ),
+                  Visibility(
+                    visible: true,
+                    child: TextField(
+                      controller: _txtInvQty,
+                      readOnly: true,
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: () async {
@@ -314,7 +323,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
       _inventoryList = inventoryData;
       availableStockQty = scannedItem['quantity'];
     });
-
+    _txtInvQty.text = scannedItem['quantity'].toString();
     _txtCode.text = scannedItem['productCode'];
     _txtName.text = scannedItem['name'];
     _txtPrice.text = (scannedItem['unitSellingPrice']).toString();
