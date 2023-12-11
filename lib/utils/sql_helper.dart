@@ -163,6 +163,17 @@ class SQLHelper {
     return result.toList();
   }
 
+  // update inventory upon successful sale of an item
+  static Future<int> updateInvOnItemSale(int qty, String pCode) async {
+    var db = await SQLHelper.db();
+    int id = await db.rawDelete('''
+        UPDATE $inventoryTable 
+        SET quantity = ?
+        WHERE productCode = ?
+      ''', [qty, pCode]);
+    return id;
+  }
+
   /*---------
   SALES TABLE 
   -----------*/

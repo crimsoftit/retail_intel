@@ -248,8 +248,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     await SQLHelper.updateInventoryItem(
         _txtCode.text,
         _txtName.text,
-        int.parse(_txtBP.text),
         int.parse(_txtQty.text),
+        int.parse(_txtBP.text),
         int.parse(_txtUnitSP.text),
         date);
     refreshInventoryList();

@@ -29,6 +29,8 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
   final TextEditingController _txtName = TextEditingController();
   final TextEditingController _txtQty = TextEditingController();
   final TextEditingController _txtPrice = TextEditingController();
+
+  final TextEditingController currentSoldQty = TextEditingController();
   final TextEditingController _txtInvQty = TextEditingController();
 
   final formKey = GlobalKey<FormState>();
@@ -41,6 +43,9 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     // loads the sold items list when the app starts
     refreshSoldItemsList();
 
+    // loads the inventory items list when the app starts
+    refreshInventoryList();
+
     print(_inventoryList);
   }
 
@@ -50,12 +55,25 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     if (productCode != null) {
       // pCode == null -> create new item
       // pCode != null -> update an existing item
-      final existingEntry = _soldItemsList
+      final existingSalesEntry = _soldItemsList
           .firstWhere((element) => element['productCode'] == productCode);
-      _txtCode.text = existingEntry['productCode'];
-      _txtName.text = existingEntry['name'];
-      _txtQty.text = (existingEntry['quantity']).toString();
-      _txtPrice.text = (existingEntry['price']).toString();
+      _txtCode.text = existingSalesEntry['productCode'];
+      _txtName.text = existingSalesEntry['name'];
+      _txtQty.text = (existingSalesEntry['quantity']).toString();
+      currentSoldQty.text = (existingSalesEntry['quantity']).toString();
+      _txtPrice.text = (existingSalesEntry['price']).toString();
+
+      print("-- SOLD ITEMS LIST--");
+      print(_soldItemsList);
+      print("-------------------");
+
+      print("-- INVENTORY LIST--");
+      print(_inventoryList);
+      print("-------------------");
+
+      final existingInvEntry = _inventoryList
+          .firstWhere((element) => element['productCode'] == productCode);
+      _txtInvQty.text = (existingInvEntry['quantity']).toString();
     } else {
       _txtCode.text = '';
       _txtName.text = '';
@@ -65,6 +83,13 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
       scanBarcode();
     }
     var textStyle = Theme.of(context).textTheme.bodyMedium;
+
+    Future<void> updateInvOnItemSale(int qty, String prCode) async {
+      await SQLHelper.db();
+      await SQLHelper.updateInvOnItemSale(qty, prCode);
+      refreshInventoryList();
+      refreshSoldItemsList();
+    }
 
     showModalBottomSheet(
       context: context,
@@ -142,7 +167,8 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                         // ignore: unrelated_type_equality_checks
                       } else if (value == 0) {
                         return 'invalid value for qty!';
-                      } else if (int.parse(value) > availableStockQty) {
+                      } else if (int.parse(value) >
+                          int.parse(_txtInvQty.text)) {
                         return 'qty exceeds available stock!';
                       }
                       return null;
@@ -173,21 +199,41 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                   ),
                   Visibility(
                     visible: true,
-                    child: TextField(
-                      controller: _txtInvQty,
-                      readOnly: true,
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _txtInvQty,
+                          readOnly: true,
+                        ),
+                        TextField(
+                          controller: currentSoldQty,
+                          readOnly: true,
+                        ),
+                      ],
                     ),
                   ),
                   ElevatedButton(
                     onPressed: () async {
                       // validator returns true if the form is valid, or false otherwise.
                       if (formKey.currentState!.validate()) {
+                        int? newInvQty;
+
                         if (productCode == null) {
                           await _addItemToSales();
+
+                          // update qty in inventory table
+                          newInvQty = int.parse(_txtInvQty.text) -
+                              int.parse(_txtQty.text);
+                          updateInvOnItemSale(newInvQty, _txtCode.text);
                         }
 
                         if (productCode != null) {
                           await _updateSoldItem(productCode);
+
+                          newInvQty = ((int.parse(_txtInvQty.text) +
+                                  int.parse(currentSoldQty.text)) -
+                              (int.parse(_txtQty.text)));
+                          updateInvOnItemSale(newInvQty, _txtCode.text);
                         }
 
                         // Clear the text fields
@@ -225,6 +271,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
         child: RefreshIndicator.adaptive(
           onRefresh: () async {
             refreshSoldItemsList();
+            refreshInventoryList();
           },
           child: Scaffold(
             backgroundColor: Colors.brown[100],
@@ -312,6 +359,15 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     });
   }
 
+  // function to fetch/load all inventory data from the database
+  void refreshInventoryList() async {
+    final inventoryItems = await SQLHelper.fetchInventoryItems();
+    setState(() {
+      _inventoryList = inventoryItems;
+    });
+    print(_inventoryList);
+  }
+
   // function to fetch/load scanned inventory item from the database
   Future scannedInventoryItem(String pCode) async {
     final inventoryData = await SQLHelper.fetchInventoryItems();
@@ -327,6 +383,8 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     _txtCode.text = scannedItem['productCode'];
     _txtName.text = scannedItem['name'];
     _txtPrice.text = (scannedItem['unitSellingPrice']).toString();
+    refreshSoldItemsList();
+    refreshInventoryList();
   }
 
   // function to delete an item from the sales table in the database
@@ -337,6 +395,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
       content: Text('item deleted successfully...'),
     ));
     refreshSoldItemsList();
+    refreshInventoryList();
   }
 
   // function to scan product barcode
@@ -359,11 +418,12 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     await SQLHelper.addSoldItem(
       _txtCode.text,
       _txtName.text,
-      int.parse(_txtPrice.text),
       int.parse(_txtQty.text),
+      int.parse(_txtPrice.text),
       date,
     );
     refreshSoldItemsList();
+    refreshInventoryList();
   }
 
   // update sold item
@@ -371,10 +431,11 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     await SQLHelper.updateSoldItem(
       _txtCode.text,
       _txtName.text,
-      int.parse(_txtPrice.text),
       int.parse(_txtQty.text),
+      int.parse(_txtPrice.text),
       date,
     );
     refreshSoldItemsList();
+    refreshInventoryList();
   }
 }
