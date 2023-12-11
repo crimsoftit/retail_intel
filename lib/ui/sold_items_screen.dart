@@ -167,10 +167,23 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                         // ignore: unrelated_type_equality_checks
                       } else if (value == 0) {
                         return 'invalid value for qty!';
-                      } else if (int.parse(value) >
-                          int.parse(_txtInvQty.text)) {
-                        return 'qty exceeds available stock!';
                       }
+
+                      var qtyFeedback = 'qty exceeds available stock!';
+                      if (productCode == null) {
+                        if (int.parse(value) > int.parse(_txtInvQty.text)) {
+                          return qtyFeedback;
+                        }
+                      }
+
+                      if (productCode != null) {
+                        if (int.parse(value) >
+                            ((int.parse(_txtInvQty.text)) +
+                                int.parse(currentSoldQty.text))) {
+                          return qtyFeedback;
+                        }
+                      }
+
                       return null;
                     },
                   ),
@@ -204,10 +217,18 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                         TextField(
                           controller: _txtInvQty,
                           readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'stock available',
+                            labelStyle: textStyle,
+                          ),
                         ),
                         TextField(
                           controller: currentSoldQty,
                           readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'current amount sold',
+                            labelStyle: textStyle,
+                          ),
                         ),
                       ],
                     ),
@@ -233,7 +254,16 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                           newInvQty = ((int.parse(_txtInvQty.text) +
                                   int.parse(currentSoldQty.text)) -
                               (int.parse(_txtQty.text)));
+
                           updateInvOnItemSale(newInvQty, _txtCode.text);
+                        }
+                        if (newInvQty == 0) {
+                          SQLHelper.deleteInventoryItem(_txtCode.text);
+                          refreshInventoryList();
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(
+                                'ITEM ${_txtName.text.toUpperCase()} IS OUT OF STOCK!!'),
+                          ));
                         }
 
                         // Clear the text fields
@@ -391,8 +421,8 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
   void _deleteSoldItem(String pCode) async {
     await SQLHelper.deleteSoldItem(pCode);
     // ignore: use_build_context_synchronously
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('item deleted successfully...'),
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('${_txtName.text} deleted successfully...'),
     ));
     refreshSoldItemsList();
     refreshInventoryList();
@@ -424,6 +454,9 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     );
     refreshSoldItemsList();
     refreshInventoryList();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('${_txtName.text} added to sales successfully...'),
+    ));
   }
 
   // update sold item
@@ -437,5 +470,8 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     );
     refreshSoldItemsList();
     refreshInventoryList();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('${_txtName.text} updated successfully...'),
+    ));
   }
 }
