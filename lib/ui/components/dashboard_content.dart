@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'package:retail_intel/constants/constants.dart';
 import 'package:retail_intel/ui/components/analytic_cards.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +21,7 @@ class _DashboardContentState extends State<DashboardContent> {
   void _stateUpdate() {
     setState() {}
 
-    print("refresh done");
+    debugPrint("refresh done");
   }
 
   @override

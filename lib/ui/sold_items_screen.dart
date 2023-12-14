@@ -1,4 +1,4 @@
-// ignore_for_file: unnecessary_null_comparison
+// ignore_for_file: unnecessary_null_comparison, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -46,7 +46,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     // loads the inventory items list when the app starts
     refreshInventoryList();
 
-    print(_inventoryList);
+    debugPrint(_inventoryList.toString());
   }
 
   // This function will be triggered when the floating button is pressed
@@ -63,13 +63,13 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
       currentSoldQty.text = (existingSalesEntry['quantity']).toString();
       _txtPrice.text = (existingSalesEntry['price']).toString();
 
-      print("-- SOLD ITEMS LIST--");
-      print(_soldItemsList);
-      print("-------------------");
+      debugPrint("-- SOLD ITEMS LIST--");
+      debugPrint(_soldItemsList.toString());
+      debugPrint("-------------------");
 
-      print("-- INVENTORY LIST--");
-      print(_inventoryList);
-      print("-------------------");
+      debugPrint("-- INVENTORY LIST--");
+      debugPrint(_inventoryList.toString());
+      debugPrint("-------------------");
 
       final existingInvEntry = _inventoryList
           .firstWhere((element) => element['productCode'] == productCode);
@@ -336,11 +336,34 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                       return Dismissible(
                         key: Key(_soldItemsList[index]['name']),
                         onDismissed: (direction) {
-                          _deleteSoldItem(_soldItemsList[index]['productCode']);
-                          refreshSoldItemsList();
+                          showDialog<String>(
+                            context: context,
+                            builder: (BuildContext context) => AlertDialog(
+                              title: const Text("Delete Item?"),
+                              content: Text(
+                                  "Delete ${_soldItemsList[index]['name']}?"),
+                              actions: <Widget>[
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context, 'Cancel');
+                                  },
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _deleteSoldItem(
+                                        _soldItemsList[index]['productCode']);
+                                    refreshSoldItemsList();
+                                    Navigator.pop(context, 'Delete');
+                                  },
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
                         },
                         child: Card(
-                          color: Colors.white,
+                          color: const Color.fromARGB(255, 94, 62, 62),
                           elevation: 1.0,
                           child: ListTile(
                             title: Text((_soldItemsList[index]['name'])),
@@ -395,7 +418,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
     setState(() {
       _inventoryList = inventoryItems;
     });
-    print(_inventoryList);
+    debugPrint(_inventoryList.toString());
   }
 
   // function to fetch/load scanned inventory item from the database
@@ -420,7 +443,6 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
   // function to delete an item from the sales table in the database
   void _deleteSoldItem(String pCode) async {
     await SQLHelper.deleteSoldItem(pCode);
-    // ignore: use_build_context_synchronously
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('${_txtName.text} deleted successfully...'),
     ));

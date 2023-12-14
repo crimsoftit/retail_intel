@@ -37,16 +37,16 @@ class _AnalyticCardsState extends State<AnalyticCards> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.all(1.0),
       child: Card(
-        margin: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0),
+        margin: const EdgeInsets.fromLTRB(2.0, 2.0, 2.0, 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             ListTile(
               leading: const Icon(Icons.album),
               title: const Text(
-                'Inventory Value',
+                'Summary',
                 style: TextStyle(
                   fontSize: 16.0,
                   color: Colors.brown,
