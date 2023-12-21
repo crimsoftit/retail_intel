@@ -1,14 +1,9 @@
-import 'package:flutter/material.dart';
+class AnalyticModel {
+  String title;
+  String tValue;
 
-class AnalyticInfo {
-  final String? svgSrc, title;
-  final int? totalValue;
-  final Color? color;
-
-  AnalyticInfo({
-    this.svgSrc,
-    this.title,
-    this.totalValue,
-    this.color,
+  AnalyticModel({
+    required this.title,
+    required this.tValue,
   });
 }

@@ -325,12 +325,35 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         (_inventoryList != null) ? _inventoryList.length : 0,
                     itemBuilder: (BuildContext context, int index) {
                       return Dismissible(
-                        key: Key(_inventoryList[index]['name']),
+                        key: UniqueKey(),
                         onDismissed: (direction) {
-                          _deleteInventoryItem(
-                              _inventoryList[index]['productCode']);
+                          showDialog<String>(
+                            context: context,
+                            builder: (BuildContext context) =>
+                                AlertDialog.adaptive(
+                              title: const Text("Delete Item!"),
+                              content: Text(
+                                  "Delete ${_inventoryList[index]['name']}?"),
+                              actions: <Widget>[
+                                ElevatedButton(
+                                  onPressed: () {
+                                    refreshInventoryList();
+                                    Navigator.pop(context, 'Cancel');
+                                  },
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    _deleteInventoryItem(
+                                        _inventoryList[index]['productCode']);
 
-                          refreshInventoryList();
+                                    refreshInventoryList();
+                                  },
+                                  child: const Text('DELETE'),
+                                ),
+                              ],
+                            ),
+                          );
                         },
                         child: Card(
                           color: Colors.white,

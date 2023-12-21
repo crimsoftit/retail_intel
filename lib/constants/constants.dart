@@ -8,11 +8,11 @@ var myDefaultBackground = Colors.orange[100];
 var date = DateFormat('yyyy-MM-dd - kk:mm').format(clock.now());
 
 // Default App Padding
-const appPadding = 2.0;
+const appPadding = 10.0;
 
 // Colors used in this app
 var primaryColor = Colors.brown[300];
-var secondaryColor = Colors.brown[100];
+var secondaryColor = Colors.white;
 const bgColor = Color.fromRGBO(247, 251, 254, 1);
 const textColor = Colors.blueGrey;
 const lightTextColor = Colors.black26;

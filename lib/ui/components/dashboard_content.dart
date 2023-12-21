@@ -1,8 +1,8 @@
 // ignore_for_file: unused_element
 
 import 'package:retail_intel/constants/constants.dart';
-import 'package:retail_intel/ui/components/analytic_cards.dart';
 import 'package:flutter/material.dart';
+import 'package:retail_intel/ui/components/analytics.dart';
 
 class DashboardContent extends StatefulWidget {
   const DashboardContent({super.key});
@@ -26,12 +26,27 @@ class _DashboardContentState extends State<DashboardContent> {
 
   @override
   Widget build(BuildContext context) {
-    return const SafeArea(
+    return SafeArea(
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(appPadding),
+        padding: const EdgeInsets.all(appPadding),
         child: Column(
           children: [
-            AnalyticCards(),
+            const SizedBox(
+              height: appPadding,
+            ),
+            Row(
+              children: [
+                const Expanded(
+                  flex: 5,
+                  child: Analytics(),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Container(),
+                ),
+              ],
+            ),
+            //AnalyticCards(),
           ],
         ),
       ),

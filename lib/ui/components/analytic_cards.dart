@@ -43,19 +43,13 @@ class _AnalyticCardsState extends State<AnalyticCards> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.album),
-              title: const Text(
+            const ListTile(
+              leading: Icon(Icons.album),
+              title: Text(
                 'Summary',
                 style: TextStyle(
                   fontSize: 16.0,
                   color: Colors.brown,
-                ),
-              ),
-              subtitle: Text(
-                '$totalInvValue',
-                style: TextStyle(
-                  color: Colors.brown[300],
                 ),
               ),
             ),
@@ -64,7 +58,7 @@ class _AnalyticCardsState extends State<AnalyticCards> {
               children: <Widget>[
                 TextButton(
                   onPressed: () {},
-                  child: const Text('buy tickets'),
+                  child: Text('$totalInvValue'),
                 ),
                 const SizedBox(
                   width: 8,

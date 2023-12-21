@@ -334,7 +334,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                         (_soldItemsList != null) ? _soldItemsList.length : 0,
                     itemBuilder: (BuildContext context, int index) {
                       return Dismissible(
-                        key: Key(_soldItemsList[index]['name']),
+                        key: UniqueKey(),
                         onDismissed: (direction) {
                           showDialog<String>(
                             context: context,
@@ -345,6 +345,8 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                               actions: <Widget>[
                                 ElevatedButton(
                                   onPressed: () {
+                                    refreshSoldItemsList();
+                                    refreshInventoryList();
                                     Navigator.pop(context, 'Cancel');
                                   },
                                   child: const Text('Cancel'),
@@ -354,6 +356,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                                     _deleteSoldItem(
                                         _soldItemsList[index]['productCode']);
                                     refreshSoldItemsList();
+                                    refreshInventoryList();
                                     Navigator.pop(context, 'Delete');
                                   },
                                   child: const Text('Delete'),
@@ -363,7 +366,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                           );
                         },
                         child: Card(
-                          color: const Color.fromARGB(255, 94, 62, 62),
+                          color: Colors.white,
                           elevation: 1.0,
                           child: ListTile(
                             title: Text((_soldItemsList[index]['name'])),
