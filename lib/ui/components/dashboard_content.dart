@@ -26,23 +26,19 @@ class _DashboardContentState extends State<DashboardContent> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return const SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(appPadding),
+        padding: EdgeInsets.all(appPadding),
         child: Column(
           children: [
-            const SizedBox(
+            SizedBox(
               height: appPadding,
             ),
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   flex: 5,
                   child: Analytics(),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Container(),
                 ),
               ],
             ),

@@ -1,9 +1,13 @@
+import 'package:flutter/material.dart';
+
 class AnalyticModel {
-  String title;
-  String tValue;
+  final String svgSrc, title, tValue;
+  final Color color;
 
   AnalyticModel({
+    required this.svgSrc,
     required this.title,
     required this.tValue,
+    required this.color,
   });
 }

@@ -348,6 +348,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                         _inventoryList[index]['productCode']);
 
                                     refreshInventoryList();
+                                    Navigator.pop(context, 'DELETE');
                                   },
                                   child: const Text('DELETE'),
                                 ),

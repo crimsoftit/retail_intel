@@ -1,6 +1,7 @@
 // ignore_for_file: unnecessary_string_interpolations
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:retail_intel/constants/constants.dart';
 import 'package:retail_intel/models/analytic_info_model.dart';
 
@@ -12,10 +13,6 @@ class AnalyticInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: appPadding,
-        vertical: appPadding / 2,
-      ),
       decoration: BoxDecoration(
         color: secondaryColor,
         borderRadius: BorderRadius.circular(5),
@@ -28,21 +25,29 @@ class AnalyticInfoCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${model.tValue}',
+                '${currencyFormat.format(int.parse(model.tValue))}',
                 style: TextStyle(
                   color: Colors.brown[600],
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
               Container(
                 padding: const EdgeInsets.all(appPadding / 2),
-                height: 40,
-                width: 40,
-                color: primaryColor,
+                height: 30,
+                width: 30,
+                decoration: BoxDecoration(
+                  color: model.color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: SvgPicture.asset(
+                  model.svgSrc,
+                  color: model.color,
+                ),
               ),
             ],
           ),
+          Text(model.title),
         ],
       ),
     );

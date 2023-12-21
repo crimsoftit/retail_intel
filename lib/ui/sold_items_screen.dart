@@ -22,6 +22,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
   List<Map<String, dynamic>> _soldItemsList = [];
 
   bool _isLoading = true;
+  bool _totalFieldVisible = false;
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -29,6 +30,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
   final TextEditingController _txtName = TextEditingController();
   final TextEditingController _txtQty = TextEditingController();
   final TextEditingController _txtPrice = TextEditingController();
+  final TextEditingController _txtTotal = TextEditingController();
 
   final TextEditingController currentSoldQty = TextEditingController();
   final TextEditingController _txtInvQty = TextEditingController();
@@ -79,6 +81,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
       _txtName.text = '';
       _txtQty.text = '';
       _txtPrice.text = '';
+      _txtTotal.text = '';
 
       scanBarcode();
     }
@@ -186,6 +189,18 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
 
                       return null;
                     },
+                    onChanged: (value) {
+                      if (_txtPrice.text != "" &&
+                          (value != null || value != '0')) {
+                        setState(() {
+                          _totalFieldVisible = true;
+                        });
+
+                        int unitPrice = int.parse(_txtPrice.text);
+                        _txtTotal.text =
+                            (unitPrice * int.parse(value)).toString();
+                      }
+                    },
                   ),
                   TextFormField(
                     controller: _txtPrice,
@@ -197,7 +212,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                       FilteringTextInputFormatter.digitsOnly
                     ],
                     decoration: InputDecoration(
-                      labelText: 'price',
+                      labelText: 'unit price',
                       labelStyle: textStyle,
                     ),
                     validator: (value) {
@@ -209,9 +224,42 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
                       }
                       return null;
                     },
+                    onChanged: (value) {
+                      if (_txtQty.text != "" &&
+                          (value != null || value != '0')) {
+                        setState(() {
+                          _totalFieldVisible = true;
+                        });
+
+                        int qty = int.parse(_txtQty.text);
+                        _txtTotal.text = (qty * int.parse(value)).toString();
+                      }
+                    },
                   ),
                   Visibility(
-                    visible: true,
+                    visible: _totalFieldVisible,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: _txtTotal,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'TOTAL AMOUNT',
+                            labelStyle: textStyle,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'invalid value for total sale!';
+                              // ignore: unrelated_type_equality_checks
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  Visibility(
+                    visible: false,
                     child: Column(
                       children: [
                         TextField(
@@ -475,6 +523,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
       _txtName.text,
       int.parse(_txtQty.text),
       int.parse(_txtPrice.text),
+      int.parse(_txtTotal.text),
       date,
     );
     refreshSoldItemsList();
@@ -491,6 +540,7 @@ class _SoldItemsScreenState extends State<SoldItemsScreen> {
       _txtName.text,
       int.parse(_txtQty.text),
       int.parse(_txtPrice.text),
+      int.parse(_txtTotal.text),
       date,
     );
     refreshSoldItemsList();

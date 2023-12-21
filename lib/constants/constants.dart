@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +8,14 @@ var myDefaultBackground = Colors.orange[100];
 
 // current date
 var date = DateFormat('yyyy-MM-dd - kk:mm').format(clock.now());
+
+NumberFormat myFormat = NumberFormat.decimalPattern('en_us');
+
+final currencyFormat = NumberFormat.currency(
+    locale: Platform.localeName,
+    customPattern: '#,### \u00a4',
+    symbol: 'Ksh',
+    decimalDigits: 2);
 
 // Default App Padding
 const appPadding = 10.0;

@@ -23,6 +23,7 @@ class SQLHelper {
   static const columnSalesName = 'name';
   static const columnSalesQty = 'quantity';
   static const columnSalesUnitSp = 'price';
+  static const columnSalesTotal = 'total_price';
   static const columnSalesDate = 'date';
 
   // SQL code to create the database tables
@@ -45,7 +46,9 @@ class SQLHelper {
           $columnSalesName TEXT,
           $columnSalesQty INTEGER,
           $columnSalesUnitSp INTEGER,
+          $columnSalesTotal INTEGER,
           $columnSalesDate TEXT,
+          
           FOREIGN KEY(productCode) REFERENCES $inventoryTable(productCode)
         )
       ''');
@@ -57,7 +60,7 @@ class SQLHelper {
     await db.execute(
         'INSERT INTO $inventoryTable VALUES (0, "12", "fruit", 2, 200, 10, "02-02-2021")');
     await db.execute(
-        'INSERT INTO $salesTable VALUES (0, "12", "fruit", 1, 10, "02-03-2021")');
+        'INSERT INTO $salesTable VALUES (0, "12", "fruit", 1, 10, 10, "02-03-2021")');
   }
 
   static Future<sql.Database> db() async {
@@ -179,14 +182,15 @@ class SQLHelper {
   -----------*/
 
   // create new item (sales table)
-  static Future<int> addSoldItem(
-      String productCode, String name, int qty, int price, String date) async {
+  static Future<int> addSoldItem(String productCode, String name, int qty,
+      int price, int totalPrice, String date) async {
     final db = await SQLHelper.db();
     final soldItem = {
       'productCode': productCode,
       'name': name,
       'quantity': qty,
       'price': price,
+      'total_price': totalPrice,
       'date': date,
     };
 
@@ -199,15 +203,16 @@ class SQLHelper {
   }
 
   // update sold item entry by id (sales table)
-  static Future<int> updateSoldItem(
-      String pCode, String name, int qty, int price, String date) async {
+  static Future<int> updateSoldItem(String pCode, String name, int qty,
+      int price, int totalPrice, String date) async {
     final db = await SQLHelper.db();
     final updateItem = {
       'productCode': pCode,
       'name': name,
       'quantity': qty,
       'price': price,
-      'date': date
+      'total_price': totalPrice,
+      'date': date,
     };
     final id = db.update(
       '$salesTable',

@@ -13,6 +13,7 @@ class Analytics extends StatefulWidget {
 
 class _AnalyticsState extends State<Analytics> {
   num totalInvValue = 0;
+  num totalSales = 0;
 
   // all inventory items in the database
   List inventoryList = [];
@@ -29,45 +30,77 @@ class _AnalyticsState extends State<Analytics> {
       totalInvValue = (totalInvValue) + element['buyingPrice'];
     }
 
-    analyticData
-        .add(AnalyticModel(title: "T.Inv", tValue: totalInvValue.toString()));
+    analyticData.add(
+      AnalyticModel(
+        svgSrc: "assets/icons/inventory.svg",
+        title: "Inventory Value",
+        tValue: totalInvValue.toString(),
+        color: const Color.fromRGBO(17, 159, 250, 1),
+      ),
+    );
 
     var mappedData = {for (var e in analyticData) e.title: e.tValue};
     //print(totalInvValue);
     setState(() {
       totalInvValue = totalInvValue.toInt();
       mappedData = mappedData;
+      analyticData = analyticData;
+      inventoryList = inventoryList;
     });
     print("******");
     print(mappedData);
     print("******");
   }
 
-  // get total sales value from the database
-  void totalSales() async {
+  //get total sales value from the database
+  void calculateTotalSales() async {
     soldItems = await SQLHelper.fetchSoldItems();
-    for (var soldItem in soldItems) {}
+    for (var soldItem in soldItems) {
+      totalSales = (totalSales) + soldItem['total_price'];
+    }
+
+    analyticData.add(
+      AnalyticModel(
+        svgSrc: "assets/icons/stock.svg",
+        title: 'Total Sales',
+        tValue: totalSales.toString(),
+        color: const Color.fromRGBO(165, 80, 179, 1),
+      ),
+    );
+
+    var mappedData = {for (var e in analyticData) e.title: e.tValue};
+
+    setState(() {
+      analyticData = analyticData;
+      totalSales = totalSales.toInt();
+      mappedData = mappedData;
+      soldItems = soldItems;
+    });
+    print("******");
+    print(mappedData);
+    print("******");
   }
 
   @override
   void initState() {
     super.initState();
     calculateInventoryValue();
+    calculateTotalSales();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(1.0),
+    return Container(
+      padding: const EdgeInsets.all(4.0),
       child: GridView.builder(
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         itemCount: analyticData.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          crossAxisSpacing: appPadding,
-          mainAxisSpacing: appPadding,
-          childAspectRatio: 1.4,
+          crossAxisCount: 3,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+          childAspectRatio: 1.11,
         ),
         itemBuilder: (context, index) =>
             AnalyticInfoCard(model: analyticData[index]),
